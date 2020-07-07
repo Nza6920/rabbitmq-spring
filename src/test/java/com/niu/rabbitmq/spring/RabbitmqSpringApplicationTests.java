@@ -98,6 +98,5 @@ public class RabbitmqSpringApplicationTests {
 
         // 只能发送message
         rabbitTemplate.send("topic001", "spring.mq.one.test1", message);
-
     }
 }

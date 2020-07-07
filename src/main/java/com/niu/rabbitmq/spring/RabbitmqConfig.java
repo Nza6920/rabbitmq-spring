@@ -1,5 +1,7 @@
 package com.niu.rabbitmq.spring;
 
+import com.niu.rabbitmq.spring.adapter.MessageDelegate;
+import com.niu.rabbitmq.spring.convert.TextMessageConvert;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -8,11 +10,13 @@ import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.support.ConsumerTagStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -85,6 +89,16 @@ public class RabbitmqConfig {
         return new Queue("queue002", true);
     }
 
+    @Bean
+    public Queue queue003() {
+        return new Queue("queue003", true);
+    }
+
+    @Bean
+    public Queue queue004() {
+        return new Queue("queue004", true);
+    }
+
     /**
      * 绑定关系
      *
@@ -98,6 +112,16 @@ public class RabbitmqConfig {
     @Bean
     public Binding binding002() {
         return BindingBuilder.bind(queue002()).to(exchange001()).with("spring.mq.two.*");
+    }
+
+    @Bean
+    public Binding binding003() {
+        return BindingBuilder.bind(queue003()).to(exchange001()).with("spring.mq.three.*");
+    }
+
+    @Bean
+    public Binding binding004() {
+        return BindingBuilder.bind(queue004()).to(exchange001()).with("spring.mq.four.*");
     }
 
     @Bean
@@ -187,14 +211,49 @@ public class RabbitmqConfig {
                 return queue + "_" + UUID.randomUUID().toString();
             }
         });
-        // 设置消息监听
-        container.setMessageListener(new ChannelAwareMessageListener() {
+
+        // 设置消息适配器
+        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+        // 适配方式1 自定义方法名
+        adapter.setDefaultListenerMethod("handleMessage3");
+        adapter.setMessageConverter(new TextMessageConvert());
+        container.setMessageListener(adapter);
+
+        return container;
+    }
+
+    @Bean
+    public SimpleMessageListenerContainer messageListenerContainer3(ConnectionFactory connectionFactory) {
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
+
+        // 监听队列
+        container.setQueues(queue003(), queue004());
+
+        // 设置消费者数量
+        container.setConcurrentConsumers(1);
+        // 设置最大消费者数量
+        container.setMaxConcurrentConsumers(5);
+        // 设置失败消息是否重回队列
+        container.setDefaultRequeueRejected(false);
+        // 设置签收模式
+        container.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        // 设置消费者标签策略
+        container.setConsumerTagStrategy(new ConsumerTagStrategy() {
             @Override
-            public void onMessage(Message message, Channel channel) throws Exception {
-                String msg = new String(message.getBody());
-                System.out.println("message listener2: " + msg);
+            public String createConsumerTag(String queue) {
+                return queue + "_" + UUID.randomUUID().toString();
             }
         });
+
+        // 设置消息适配器
+        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+        // 适配方式2 队列名称和方法名称进行一一匹配
+        HashMap<String, String> queueAndMethod = new HashMap<>(2);
+        queueAndMethod.put("queue003", "handleMessage4");
+        queueAndMethod.put("queue004", "handleMessage5");
+        adapter.setQueueOrTagToMethodName(queueAndMethod);
+        container.setMessageListener(adapter);
+
         return container;
     }
 }
