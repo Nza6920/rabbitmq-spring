@@ -1,7 +1,12 @@
 package com.niu.rabbitmq.spring;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.niu.rabbitmq.spring.entity.Order;
+import com.niu.rabbitmq.spring.entity.Pack;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.internal.matchers.Or;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePostProcessor;
@@ -98,5 +103,96 @@ public class RabbitmqSpringApplicationTests {
 
         // 只能发送message
         rabbitTemplate.send("topic001", "spring.mq.one.test1", message);
+    }
+
+    /**
+     * 测试json消息
+     */
+    @Test
+    public void testJsonMessage() throws JsonProcessingException {
+        Order order = new Order("666", "niu", "测试");
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(order);
+        System.out.println("order json: " + json);
+
+        MessageProperties properties = new MessageProperties();
+        // json消息必须设置内容类型为 application/json
+        properties.setContentType("application/json");
+        Message message = new Message(json.getBytes(), properties);
+
+        rabbitTemplate.send("queue002", message);
+    }
+
+    /**
+     * 测试json消息 支持实体类转换
+     */
+    @Test
+    public void testSendJavaMessage() throws JsonProcessingException {
+        Order order = new Order("111", "nza", "hhh");
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(order);
+        System.out.println("order json: " + json);
+
+        MessageProperties properties = new MessageProperties();
+        // json消息必须设置内容类型为 application/json
+        properties.setContentType("application/json");
+        properties.getHeaders().put("__TypeId__", "com.niu.rabbitmq.spring.entity.Order");
+        Message message = new Message(json.getBytes(), properties);
+
+        rabbitTemplate.send("queue002", message);
+    }
+
+    /**
+     * 测试json消息 支持实体类转换
+     */
+    @Test
+    public void testSendJavaMessage2() throws JsonProcessingException {
+        Pack pack = new Pack("111", "nza", "hhh");
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(pack);
+        System.out.println("pack json: " + json);
+
+        MessageProperties properties = new MessageProperties();
+        // json消息必须设置内容类型为 application/json
+        properties.setContentType("application/json");
+        properties.getHeaders().put("__TypeId__", "com.niu.rabbitmq.spring.entity.Pack");
+        Message message = new Message(json.getBytes(), properties);
+
+        rabbitTemplate.send("queue002", message);
+    }
+
+    /**
+     * 测试json消息 支持java多对象的映射
+     */
+    @Test
+    public void testSendMappingMessage2() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        // 初始化实体
+        Pack pack = new Pack("222", "nza2", "aaa");
+        String packJson = mapper.writeValueAsString(pack);
+        System.out.println("pack json: " + packJson);
+
+        Order order = new Order("111", "nza", "hhh");
+        String orderJson = mapper.writeValueAsString(order);
+        System.out.println("order json: " + orderJson);
+
+        // 设置消息
+        MessageProperties properties = new MessageProperties();
+        // json消息必须设置内容类型为 application/json
+        properties.setContentType("application/json");
+        properties.getHeaders().put("__TypeId__", "pack");
+        Message message = new Message(packJson.getBytes(), properties);
+
+        MessageProperties properties2 = new MessageProperties();
+        // json消息必须设置内容类型为 application/json
+        properties2.setContentType("application/json");
+        properties2.getHeaders().put("__TypeId__", "order");
+        Message message2 = new Message(orderJson.getBytes(), properties2);
+
+        // 发送消息
+        rabbitTemplate.send("queue002", message);
+        rabbitTemplate.send("queue002", message2);
+
     }
 }
