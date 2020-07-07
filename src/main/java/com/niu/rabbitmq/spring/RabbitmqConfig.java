@@ -1,5 +1,9 @@
 package com.niu.rabbitmq.spring;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -50,5 +54,52 @@ public class RabbitmqConfig {
         // 必须设置为true， 否则容器不会加载rabbitAdmin
         rabbitAdmin.setAutoStartup(true);
         return rabbitAdmin;
+    }
+
+    /**
+     * 声明交换机
+     * @return TopicExchange
+     */
+    @Bean
+    public TopicExchange exchange001() {
+        return new TopicExchange("topic001", true, false);
+    }
+
+    /**
+     * 声明队列
+     * @return Queue
+     */
+    @Bean
+    public Queue queue001() {
+        return new Queue("queue001", true);
+    }
+
+    @Bean
+    public Queue queue002() {
+        return new Queue("queue002", true);
+    }
+
+    /**
+     * 绑定关系
+     * @return Binding
+     */
+    @Bean
+    public Binding binding001() {
+        return BindingBuilder.bind(queue001()).to(exchange001()).with("spring.mq.one.*");
+    }
+
+    @Bean
+    public Binding binding002() {
+        return BindingBuilder.bind(queue002()).to(exchange001()).with("spring.mq.two.*");
+    }
+
+    @Bean
+    public Queue queueImage() {
+        return new Queue("queue_image", true);
+    }
+
+    @Bean
+    public Queue queuePdf() {
+        return new Queue("queue_pdf", true);
     }
 }
