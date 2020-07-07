@@ -92,8 +92,12 @@ public class RabbitmqSpringApplicationTests {
         Message message = new Message("Hello Rabbitmq 1234".getBytes(), properties);
 
         // 2. 发送消息
+        // 可以自动转换对象
         rabbitTemplate.convertAndSend("topic001", "spring.mq.one.test1", "Hello Object!");
+        rabbitTemplate.convertAndSend("topic001", "spring.mq.two.test1", "Hello Object2!");
 
+        // 只能发送message
         rabbitTemplate.send("topic001", "spring.mq.one.test1", message);
+
     }
 }
