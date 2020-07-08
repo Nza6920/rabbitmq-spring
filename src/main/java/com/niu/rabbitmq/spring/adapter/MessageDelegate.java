@@ -3,6 +3,8 @@ package com.niu.rabbitmq.spring.adapter;
 import com.niu.rabbitmq.spring.entity.Order;
 import com.niu.rabbitmq.spring.entity.Pack;
 
+import java.io.File;
+
 /**
  * 消息适配器
  *
@@ -34,6 +36,14 @@ public class MessageDelegate {
      */
     public void consumeMessage(Pack pack) {
         System.out.println("pack 对象: " + pack.toString());
+    }
+
+    /**
+     * file convert
+     * @param file 消息体
+     */
+    public void consumeMessage(File file) {
+        System.out.println("file convert: " + file.getName());
     }
 
     public void handleMessage(byte[] messageBody) {

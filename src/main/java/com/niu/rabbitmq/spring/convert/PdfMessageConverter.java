@@ -33,5 +33,4 @@ public class PdfMessageConverter implements MessageConverter {
         }
         return f;
     }
-
 }

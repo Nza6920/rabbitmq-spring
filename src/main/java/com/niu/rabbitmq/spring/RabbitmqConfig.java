@@ -4,8 +4,6 @@ import com.niu.rabbitmq.spring.adapter.MessageDelegate;
 import com.niu.rabbitmq.spring.convert.ImageMessageConverter;
 import com.niu.rabbitmq.spring.convert.PdfMessageConverter;
 import com.niu.rabbitmq.spring.convert.TextMessageConvert;
-import com.niu.rabbitmq.spring.entity.Order;
-import com.niu.rabbitmq.spring.entity.Pack;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -17,14 +15,12 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.support.ConsumerTagStrategy;
 import org.springframework.amqp.support.converter.ContentTypeDelegatingMessageConverter;
-import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -202,7 +198,7 @@ public class RabbitmqConfig {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
 
         // 监听队列
-        container.setQueues(queue002());
+        container.setQueues(queue002(), queueImage(), queuePdf());
 
         // 设置消费者数量
         container.setConcurrentConsumers(1);
@@ -260,6 +256,7 @@ public class RabbitmqConfig {
 
         // 4. 多类型转换
         MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+        adapter.setDefaultListenerMethod("consumeMessage");
         ContentTypeDelegatingMessageConverter converter = new ContentTypeDelegatingMessageConverter();
 
         TextMessageConvert textMessageConvert = new TextMessageConvert();
@@ -279,7 +276,6 @@ public class RabbitmqConfig {
         PdfMessageConverter pdfMessageConverter = new PdfMessageConverter();
         converter.addDelegate("application/pdf", pdfMessageConverter);
 
-        adapter.setDefaultListenerMethod("consumeMessage");
         adapter.setMessageConverter(converter);
         container.setMessageListener(adapter);
         return container;

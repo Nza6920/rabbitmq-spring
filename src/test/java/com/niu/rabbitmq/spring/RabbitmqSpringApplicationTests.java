@@ -6,7 +6,6 @@ import com.niu.rabbitmq.spring.entity.Order;
 import com.niu.rabbitmq.spring.entity.Pack;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.internal.matchers.Or;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePostProcessor;
@@ -16,6 +15,10 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
@@ -194,5 +197,24 @@ public class RabbitmqSpringApplicationTests {
         rabbitTemplate.send("queue002", message);
         rabbitTemplate.send("queue002", message2);
 
+    }
+
+    /**
+     * 测试 Convert Message
+     */
+    @Test
+    public void testSendExtConvertMessage() throws IOException {
+//        byte[] body = Files.readAllBytes(Paths.get("C:\\Users\\Administrator\\Pictures\\Saved Pictures\\my", "image_1.jpg"));
+//        MessageProperties properties = new MessageProperties();
+//        properties.setContentType("image/png");
+//        properties.getHeaders().put("extName", "png");
+//        Message message = new Message(body, properties);
+//        rabbitTemplate.send("", "queue_image", message);
+
+        byte[] body = Files.readAllBytes(Paths.get("C:\\Users\\Administrator\\Downloads\\Documents", "README.pdf"));
+        MessageProperties properties = new MessageProperties();
+        properties.setContentType("application/pdf");
+        Message message = new Message(body, properties);
+        rabbitTemplate.send("", "queue_pdf", message);
     }
 }
